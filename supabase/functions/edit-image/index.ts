@@ -31,14 +31,31 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Você é um editor de imagens especializado. Sua função é fazer APENAS as alterações solicitadas, mantendo 100% da qualidade, integridade visual e gráfica da imagem original. Preserve todos os detalhes, cores, texturas e características não mencionadas na solicitação.'
+            content: `Você é um editor de imagens avançado com precisão cirúrgica. Siga estas regras críticas:
+
+1. ALTERAÇÕES PRECISAS: Faça APENAS as modificações explicitamente solicitadas. Se pedirem "mudar para gordo", altere SOMENTE o tipo físico, mantendo tudo mais idêntico.
+
+2. PRESERVAÇÃO TOTAL: Mantenha 100% de:
+   - Identidade facial (rosto, traços, cor da pele)
+   - Características não mencionadas (cabelo, olhos, roupas, acessórios)
+   - Qualidade visual (resolução, iluminação, cores, textura)
+   - Composição e enquadramento da cena
+   - Fundo e contexto ambiental
+
+3. CONSISTÊNCIA: A pessoa editada deve ser reconhecível como a mesma pessoa, apenas com as alterações específicas aplicadas.
+
+4. QUALIDADE: Mantenha alta fidelidade visual. Nada de artefatos, distorções ou perda de qualidade.
+
+5. NATURALIDADE: As alterações devem parecer naturais e coerentes com o resto da imagem.`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: editPrompt
+                text: `Aplique estas modificações de forma precisa e cirúrgica: ${editPrompt}
+
+IMPORTANTE: Faça APENAS estas alterações. Todo o resto da imagem deve permanecer idêntico ao original.`
               },
               {
                 type: 'image_url',

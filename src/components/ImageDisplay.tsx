@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
-import { ImageEditDialog } from "@/components/ImageEditDialog";
+import { LiveImageEditDialog } from "@/components/LiveImageEditDialog";
 
 interface ImageDisplayProps {
   imageUrl: string;
@@ -45,7 +45,7 @@ export const ImageDisplay = ({ imageUrl, alt, onImageEdited }: ImageDisplayProps
         </div>
       </Card>
 
-      <ImageEditDialog
+      <LiveImageEditDialog
         isOpen={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
         imageUrl={imageUrl}
