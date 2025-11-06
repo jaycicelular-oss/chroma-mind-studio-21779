@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Image, Film, Layers, Video, UserCircle } from "lucide-react";
+import { Image, Film, Layers, Video, UserCircle, Sparkles } from "lucide-react";
 
 interface ContentTabsProps {
   children: {
@@ -8,6 +8,7 @@ interface ContentTabsProps {
     framesTab: React.ReactNode;
     videoTab: React.ReactNode;
     characterTab: React.ReactNode;
+    liveEditorTab?: React.ReactNode;
   };
   onTabChange?: (value: string) => void;
 }
@@ -15,7 +16,7 @@ interface ContentTabsProps {
 export const ContentTabs = ({ children, onTabChange }: ContentTabsProps) => {
   return (
     <Tabs defaultValue="image" className="w-full" onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-5 backdrop-blur-glass bg-card/40">
+      <TabsList className="grid w-full grid-cols-6 backdrop-blur-glass bg-card/40"> 
         <TabsTrigger value="image" className="flex items-center gap-2">
           <Image className="h-4 w-4" />
           <span className="hidden sm:inline">Imagem</span>
@@ -35,6 +36,12 @@ export const ContentTabs = ({ children, onTabChange }: ContentTabsProps) => {
         <TabsTrigger value="character" className="flex items-center gap-2">
           <UserCircle className="h-4 w-4" />
           <span className="hidden sm:inline">Personagem</span>
+        </TabsTrigger>
+
+        {/* Nova aba: Live Editor */}
+        <TabsTrigger value="live-editor" className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" />
+          <span className="hidden sm:inline">Live Editor</span>
         </TabsTrigger>
       </TabsList>
 
@@ -56,6 +63,10 @@ export const ContentTabs = ({ children, onTabChange }: ContentTabsProps) => {
 
       <TabsContent value="character" className="mt-6">
         {children.characterTab}
+      </TabsContent>
+
+      <TabsContent value="live-editor" className="mt-6">
+        {children.liveEditorTab}
       </TabsContent>
     </Tabs>
   );
