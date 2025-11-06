@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, X, Sparkles } from "lucide-react";
+import { Loader2, Upload, X, Sparkles, User, Box, Camera, Palette } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface LiveImageEditDialogProps {
   isOpen: boolean;
@@ -25,20 +26,68 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
   const { toast } = useToast();
 
   // Filtros avançados para Live Editing
-  const [bodyType, setBodyType] = useState("none");
-  const [pose, setPose] = useState("none");
-  const [angle, setAngle] = useState("none");
-  const [expression, setExpression] = useState("none");
-  const [clothing, setClothing] = useState("none");
-  const [hairStyle, setHairStyle] = useState("none");
-  const [lighting, setLighting] = useState("none");
-  const [background, setBackground] = useState("none");
-  const [ageAppearance, setAgeAppearance] = useState("none");
-  const [muscleDefinition, setMuscleDefinition] = useState("none");
+  const [advancedFilters, setAdvancedFilters] = useState({
+    hairColor: "none",
+    hairStyle: "none",
+    eyeColor: "none",
+    bodyType: "none",
+    height: "none",
+    clothing: "none",
+    pose: "none",
+    background: "none",
+    facialExpression: "none",
+    ethnicity: "none",
+    age: "none",
+    bustSize: "none",
+    breastSize: "none",
+    musculature: "none",
+    armPosition: "none",
+    viewDistance: "none",
+    cameraAngle: "none",
+    timeOfDay: "none",
+    lighting: "none",
+    contentType: "none",
+  });
+  
+  const [customOptions, setCustomOptions] = useState<Record<string, string[]>>({
+    hairColor: [],
+    hairStyle: [],
+    eyeColor: [],
+    facialExpression: [],
+    bodyType: [],
+    clothing: [],
+    pose: [],
+    background: [],
+    lighting: [],
+  });
+
+  // Load custom options from localStorage
+  useEffect(() => {
+    const savedOptions = localStorage.getItem('customFilterOptions');
+    if (savedOptions) {
+      setCustomOptions(JSON.parse(savedOptions));
+    }
+  }, []);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setAdvancedFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const addCustomOption = (filterKey: string, newValue: string) => {
+    const currentOptions = customOptions[filterKey] || [];
+    if (!currentOptions.includes(newValue)) {
+      const updatedOptions = {
+        ...customOptions,
+        [filterKey]: [...currentOptions, newValue],
+      };
+      setCustomOptions(updatedOptions);
+      localStorage.setItem('customFilterOptions', JSON.stringify(updatedOptions));
+    }
+  };
 
   // Auto-editar quando filtros mudam
   useEffect(() => {
-    const hasAnyFilter = [bodyType, pose, angle, expression, clothing, hairStyle, lighting, background, ageAppearance, muscleDefinition].some(f => f !== "none");
+    const hasAnyFilter = Object.values(advancedFilters).some(f => f !== "none");
     
     if (hasAnyFilter && !isEditing && isOpen) {
       const timer = setTimeout(() => {
@@ -46,21 +95,39 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [bodyType, pose, angle, expression, clothing, hairStyle, lighting, background, ageAppearance, muscleDefinition]);
+  }, [advancedFilters]);
 
   const buildPromptFromFilters = () => {
     const parts: string[] = [];
+    const filterMap: Record<string, string> = {
+      hairColor: "cor do cabelo",
+      hairStyle: "estilo de cabelo",
+      eyeColor: "cor dos olhos",
+      bodyType: "tipo físico",
+      height: "altura",
+      clothing: "vestuário",
+      pose: "pose",
+      background: "fundo",
+      facialExpression: "expressão facial",
+      ethnicity: "etnia",
+      age: "idade",
+      bustSize: "tamanho do busto",
+      breastSize: "tamanho dos seios",
+      musculature: "musculatura",
+      armPosition: "posição dos braços",
+      viewDistance: "distância da câmera",
+      cameraAngle: "ângulo da câmera",
+      timeOfDay: "hora do dia",
+      lighting: "iluminação",
+      contentType: "tipo de conteúdo",
+    };
     
-    if (bodyType !== "none") parts.push(`tipo físico: ${bodyType}`);
-    if (pose !== "none") parts.push(`pose: ${pose}`);
-    if (angle !== "none") parts.push(`ângulo: ${angle}`);
-    if (expression !== "none") parts.push(`expressão: ${expression}`);
-    if (clothing !== "none") parts.push(`roupa: ${clothing}`);
-    if (hairStyle !== "none") parts.push(`cabelo: ${hairStyle}`);
-    if (lighting !== "none") parts.push(`iluminação: ${lighting}`);
-    if (background !== "none") parts.push(`fundo: ${background}`);
-    if (ageAppearance !== "none") parts.push(`aparência de idade: ${ageAppearance}`);
-    if (muscleDefinition !== "none") parts.push(`definição muscular: ${muscleDefinition}`);
+    Object.entries(advancedFilters).forEach(([key, value]) => {
+      if (value !== "none") {
+        const label = filterMap[key] || key;
+        parts.push(`${label}: ${value}`);
+      }
+    });
     
     if (editPrompt.trim()) {
       parts.push(editPrompt.trim());
@@ -193,16 +260,28 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
     setEditPrompt("");
     setEditedImageUrl(null);
     setUploadedImage(null);
-    setBodyType("none");
-    setPose("none");
-    setAngle("none");
-    setExpression("none");
-    setClothing("none");
-    setHairStyle("none");
-    setLighting("none");
-    setBackground("none");
-    setAgeAppearance("none");
-    setMuscleDefinition("none");
+    setAdvancedFilters({
+      hairColor: "none",
+      hairStyle: "none",
+      eyeColor: "none",
+      bodyType: "none",
+      height: "none",
+      clothing: "none",
+      pose: "none",
+      background: "none",
+      facialExpression: "none",
+      ethnicity: "none",
+      age: "none",
+      bustSize: "none",
+      breastSize: "none",
+      musculature: "none",
+      armPosition: "none",
+      viewDistance: "none",
+      cameraAngle: "none",
+      timeOfDay: "none",
+      lighting: "none",
+      contentType: "none",
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -315,187 +394,477 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {/* Tipo Físico */}
-                <div className="space-y-2">
-                  <Label>Tipo Físico</Label>
-                  <Select value={bodyType} onValueChange={setBodyType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      <SelectItem value="magro">Magro</SelectItem>
-                      <SelectItem value="atlético">Atlético</SelectItem>
-                      <SelectItem value="musculoso">Musculoso</SelectItem>
-                      <SelectItem value="gordo">Gordo</SelectItem>
-                      <SelectItem value="com sobrepeso">Com Sobrepeso</SelectItem>
-                      <SelectItem value="muito magro">Muito Magro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Aparência Física */}
+                <div className="col-span-full">
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold text-primary">Aparência Física</Label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Cor do Cabelo */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Cor do Cabelo</Label>
+                      <Select value={advancedFilters.hairColor} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newColor = prompt('Digite a nova cor de cabelo:');
+                          if (newColor && newColor.trim()) {
+                            addCustomOption('hairColor', newColor.trim());
+                            handleFilterChange('hairColor', newColor.trim());
+                          }
+                        } else {
+                          handleFilterChange('hairColor', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="black">Preto</SelectItem>
+                          <SelectItem value="brown">Castanho</SelectItem>
+                          <SelectItem value="blonde">Loiro</SelectItem>
+                          <SelectItem value="red">Ruivo</SelectItem>
+                          <SelectItem value="white">Branco</SelectItem>
+                          <SelectItem value="gray">Cinza</SelectItem>
+                          {customOptions.hairColor?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Estilo de Cabelo */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Estilo de Cabelo</Label>
+                      <Select value={advancedFilters.hairStyle} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newStyle = prompt('Digite o novo estilo de cabelo:');
+                          if (newStyle && newStyle.trim()) {
+                            addCustomOption('hairStyle', newStyle.trim());
+                            handleFilterChange('hairStyle', newStyle.trim());
+                          }
+                        } else {
+                          handleFilterChange('hairStyle', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="straight">Liso</SelectItem>
+                          <SelectItem value="wavy">Ondulado</SelectItem>
+                          <SelectItem value="curly">Cacheado</SelectItem>
+                          <SelectItem value="short">Curto</SelectItem>
+                          <SelectItem value="long">Longo</SelectItem>
+                          <SelectItem value="ponytail">Rabo de Cavalo</SelectItem>
+                          <SelectItem value="braided">Trançado</SelectItem>
+                          <SelectItem value="bun">Coque</SelectItem>
+                          {customOptions.hairStyle?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Cor dos Olhos */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Cor dos Olhos</Label>
+                      <Select value={advancedFilters.eyeColor} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newColor = prompt('Digite a nova cor dos olhos:');
+                          if (newColor && newColor.trim()) {
+                            addCustomOption('eyeColor', newColor.trim());
+                            handleFilterChange('eyeColor', newColor.trim());
+                          }
+                        } else {
+                          handleFilterChange('eyeColor', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="brown">Castanho</SelectItem>
+                          <SelectItem value="blue">Azul</SelectItem>
+                          <SelectItem value="green">Verde</SelectItem>
+                          <SelectItem value="hazel">Avelã</SelectItem>
+                          <SelectItem value="gray">Cinza</SelectItem>
+                          <SelectItem value="amber">Âmbar</SelectItem>
+                          {customOptions.eyeColor?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Expressão Facial */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Expressão Facial</Label>
+                      <Select value={advancedFilters.facialExpression} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newExpression = prompt('Digite a nova expressão facial:');
+                          if (newExpression && newExpression.trim()) {
+                            addCustomOption('facialExpression', newExpression.trim());
+                            handleFilterChange('facialExpression', newExpression.trim());
+                          }
+                        } else {
+                          handleFilterChange('facialExpression', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="happy">Feliz</SelectItem>
+                          <SelectItem value="sad">Triste</SelectItem>
+                          <SelectItem value="neutral">Neutra</SelectItem>
+                          <SelectItem value="surprised">Surpresa</SelectItem>
+                          <SelectItem value="angry">Raiva</SelectItem>
+                          <SelectItem value="seductive">Sedutora</SelectItem>
+                          <SelectItem value="playful">Brincalhona</SelectItem>
+                          {customOptions.facialExpression?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Etnia */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Etnia</Label>
+                      <Select value={advancedFilters.ethnicity} onValueChange={(v) => handleFilterChange('ethnicity', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="caucasian">Caucasiana</SelectItem>
+                          <SelectItem value="african">Africana</SelectItem>
+                          <SelectItem value="asian">Asiática</SelectItem>
+                          <SelectItem value="indigenous">Indígena</SelectItem>
+                          <SelectItem value="latin">Latina</SelectItem>
+                          <SelectItem value="middle-eastern">Oriente Médio</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Idade */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Idade</Label>
+                      <Select value={advancedFilters.age} onValueChange={(v) => handleFilterChange('age', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="young-adult">Jovem Adulto</SelectItem>
+                          <SelectItem value="adult">Adulto</SelectItem>
+                          <SelectItem value="mature">Maduro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Pose */}
-                <div className="space-y-2">
-                  <Label>Pose</Label>
-                  <Select value={pose} onValueChange={setPose}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="em pé">Em pé</SelectItem>
-                      <SelectItem value="sentado">Sentado</SelectItem>
-                      <SelectItem value="braços cruzados">Braços cruzados</SelectItem>
-                      <SelectItem value="mãos nos bolsos">Mãos nos bolsos</SelectItem>
-                      <SelectItem value="acenando">Acenando</SelectItem>
-                      <SelectItem value="correndo">Correndo</SelectItem>
-                      <SelectItem value="pulando">Pulando</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Corpo e Físico */}
+                <div className="col-span-full">
+                  <Separator className="my-4" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <Box className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold text-primary">Corpo e Físico</Label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Tipo de Corpo */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Tipo de Corpo</Label>
+                      <Select value={advancedFilters.bodyType} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newType = prompt('Digite o novo tipo de corpo:');
+                          if (newType && newType.trim()) {
+                            addCustomOption('bodyType', newType.trim());
+                            handleFilterChange('bodyType', newType.trim());
+                          }
+                        } else {
+                          handleFilterChange('bodyType', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="slim">Magro</SelectItem>
+                          <SelectItem value="average">Médio</SelectItem>
+                          <SelectItem value="athletic">Atlético</SelectItem>
+                          <SelectItem value="curvy">Curvilíneo</SelectItem>
+                          <SelectItem value="muscular">Musculoso</SelectItem>
+                          <SelectItem value="petite">Pequeno</SelectItem>
+                          <SelectItem value="plus">Plus Size</SelectItem>
+                          {customOptions.bodyType?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Altura */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Altura</Label>
+                      <Select value={advancedFilters.height} onValueChange={(v) => handleFilterChange('height', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="short">Baixo</SelectItem>
+                          <SelectItem value="average">Médio</SelectItem>
+                          <SelectItem value="tall">Alto</SelectItem>
+                          <SelectItem value="very-tall">Muito Alto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Vestuário */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Vestuário</Label>
+                      <Select value={advancedFilters.clothing} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newClothing = prompt('Digite o novo tipo de vestuário:');
+                          if (newClothing && newClothing.trim()) {
+                            addCustomOption('clothing', newClothing.trim());
+                            handleFilterChange('clothing', newClothing.trim());
+                          }
+                        } else {
+                          handleFilterChange('clothing', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="casual">Casual</SelectItem>
+                          <SelectItem value="formal">Formal</SelectItem>
+                          <SelectItem value="sporty">Esportivo</SelectItem>
+                          <SelectItem value="elegant">Elegante</SelectItem>
+                          <SelectItem value="fantasy">Fantasia</SelectItem>
+                          {customOptions.clothing?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Ângulo */}
-                <div className="space-y-2">
-                  <Label>Ângulo da Câmera</Label>
-                  <Select value={angle} onValueChange={setAngle}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      <SelectItem value="frontal">Frontal</SelectItem>
-                      <SelectItem value="perfil">Perfil</SelectItem>
-                      <SelectItem value="3/4">3/4</SelectItem>
-                      <SelectItem value="de costas">De costas</SelectItem>
-                      <SelectItem value="de cima">De cima</SelectItem>
-                      <SelectItem value="de baixo">De baixo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Pose e Câmera */}
+                <div className="col-span-full">
+                  <Separator className="my-4" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <Camera className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold text-primary">Pose e Câmera</Label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Pose */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Pose</Label>
+                      <Select value={advancedFilters.pose} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newPose = prompt('Digite a nova pose:');
+                          if (newPose && newPose.trim()) {
+                            addCustomOption('pose', newPose.trim());
+                            handleFilterChange('pose', newPose.trim());
+                          }
+                        } else {
+                          handleFilterChange('pose', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="standing">Em pé</SelectItem>
+                          <SelectItem value="sitting">Sentado</SelectItem>
+                          <SelectItem value="walking">Andando</SelectItem>
+                          <SelectItem value="action">Ação</SelectItem>
+                          <SelectItem value="portrait">Retrato</SelectItem>
+                          <SelectItem value="dynamic">Dinâmica</SelectItem>
+                          {customOptions.pose?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Posição dos Braços */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Posição dos Braços</Label>
+                      <Select value={advancedFilters.armPosition} onValueChange={(v) => handleFilterChange('armPosition', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="relaxed">Relaxados</SelectItem>
+                          <SelectItem value="crossed">Cruzados</SelectItem>
+                          <SelectItem value="raised">Levantados</SelectItem>
+                          <SelectItem value="behind-back">Atrás das Costas</SelectItem>
+                          <SelectItem value="on-hips">Na Cintura</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Distância da Câmera */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Distância da Câmera</Label>
+                      <Select value={advancedFilters.viewDistance} onValueChange={(v) => handleFilterChange('viewDistance', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="close-up">Close-up</SelectItem>
+                          <SelectItem value="medium">Médio</SelectItem>
+                          <SelectItem value="full-body">Corpo Inteiro</SelectItem>
+                          <SelectItem value="wide">Plano Aberto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Ângulo da Câmera */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Ângulo da Câmera</Label>
+                      <Select value={advancedFilters.cameraAngle} onValueChange={(v) => handleFilterChange('cameraAngle', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="front">Frontal</SelectItem>
+                          <SelectItem value="side">Lateral</SelectItem>
+                          <SelectItem value="back">Traseira</SelectItem>
+                          <SelectItem value="above">De Cima</SelectItem>
+                          <SelectItem value="below">De Baixo</SelectItem>
+                          <SelectItem value="tilted">Inclinado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Expressão */}
-                <div className="space-y-2">
-                  <Label>Expressão Facial</Label>
-                  <Select value={expression} onValueChange={setExpression}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="sorrindo">Sorrindo</SelectItem>
-                      <SelectItem value="sério">Sério</SelectItem>
-                      <SelectItem value="feliz">Feliz</SelectItem>
-                      <SelectItem value="triste">Triste</SelectItem>
-                      <SelectItem value="bravo">Bravo</SelectItem>
-                      <SelectItem value="surpreso">Surpreso</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Ambiente e Iluminação */}
+                <div className="col-span-full">
+                  <Separator className="my-4" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <Palette className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold text-primary">Ambiente e Iluminação</Label>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Fundo */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Fundo</Label>
+                      <Select value={advancedFilters.background} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newBg = prompt('Digite o novo tipo de fundo:');
+                          if (newBg && newBg.trim()) {
+                            addCustomOption('background', newBg.trim());
+                            handleFilterChange('background', newBg.trim());
+                          }
+                        } else {
+                          handleFilterChange('background', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="plain">Simples</SelectItem>
+                          <SelectItem value="nature">Natureza</SelectItem>
+                          <SelectItem value="urban">Urbano</SelectItem>
+                          <SelectItem value="indoor">Interior</SelectItem>
+                          <SelectItem value="abstract">Abstrato</SelectItem>
+                          <SelectItem value="beach">Praia</SelectItem>
+                          {customOptions.background?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Roupa */}
-                <div className="space-y-2">
-                  <Label>Roupa</Label>
-                  <Select value={clothing} onValueChange={setClothing}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="casual">Casual</SelectItem>
-                      <SelectItem value="formal">Formal</SelectItem>
-                      <SelectItem value="esportivo">Esportivo</SelectItem>
-                      <SelectItem value="terno">Terno</SelectItem>
-                      <SelectItem value="vestido">Vestido</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {/* Iluminação */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Iluminação</Label>
+                      <Select value={advancedFilters.lighting} onValueChange={(v) => {
+                        if (v === 'add-new') {
+                          const newLight = prompt('Digite o novo tipo de iluminação:');
+                          if (newLight && newLight.trim()) {
+                            addCustomOption('lighting', newLight.trim());
+                            handleFilterChange('lighting', newLight.trim());
+                          }
+                        } else {
+                          handleFilterChange('lighting', v);
+                        }
+                      }}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="natural">Natural</SelectItem>
+                          <SelectItem value="studio">Estúdio</SelectItem>
+                          <SelectItem value="dramatic">Dramática</SelectItem>
+                          <SelectItem value="soft">Suave</SelectItem>
+                          <SelectItem value="backlit">Contraluz</SelectItem>
+                          <SelectItem value="neon">Neon</SelectItem>
+                          {customOptions.lighting?.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                          <Separator className="my-2" />
+                          <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                {/* Cabelo */}
-                <div className="space-y-2">
-                  <Label>Estilo de Cabelo</Label>
-                  <Select value={hairStyle} onValueChange={setHairStyle}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      <SelectItem value="curto">Curto</SelectItem>
-                      <SelectItem value="longo">Longo</SelectItem>
-                      <SelectItem value="careca">Careca</SelectItem>
-                      <SelectItem value="cacheado">Cacheado</SelectItem>
-                      <SelectItem value="liso">Liso</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Iluminação */}
-                <div className="space-y-2">
-                  <Label>Iluminação</Label>
-                  <Select value={lighting} onValueChange={setLighting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="natural">Natural</SelectItem>
-                      <SelectItem value="dramática">Dramática</SelectItem>
-                      <SelectItem value="suave">Suave</SelectItem>
-                      <SelectItem value="neon">Neon</SelectItem>
-                      <SelectItem value="pôr do sol">Pôr do sol</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Fundo */}
-                <div className="space-y-2">
-                  <Label>Fundo</Label>
-                  <Select value={background} onValueChange={setBackground}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      <SelectItem value="branco">Branco</SelectItem>
-                      <SelectItem value="preto">Preto</SelectItem>
-                      <SelectItem value="cidade">Cidade</SelectItem>
-                      <SelectItem value="natureza">Natureza</SelectItem>
-                      <SelectItem value="praia">Praia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Aparência de Idade */}
-                <div className="space-y-2">
-                  <Label>Aparência de Idade</Label>
-                  <Select value={ageAppearance} onValueChange={setAgeAppearance}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="jovem (18-25)">Jovem (18-25)</SelectItem>
-                      <SelectItem value="adulto (25-40)">Adulto (25-40)</SelectItem>
-                      <SelectItem value="meia-idade (40-60)">Meia-idade (40-60)</SelectItem>
-                      <SelectItem value="idoso (60+)">Idoso (60+)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Definição Muscular */}
-                <div className="space-y-2">
-                  <Label>Definição Muscular</Label>
-                  <Select value={muscleDefinition} onValueChange={setMuscleDefinition}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      <SelectItem value="pouca definição">Pouca definição</SelectItem>
-                      <SelectItem value="média definição">Média definição</SelectItem>
-                      <SelectItem value="muito definido">Muito definido</SelectItem>
-                      <SelectItem value="bodybuilder">Bodybuilder</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {/* Hora do Dia */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Hora do Dia</Label>
+                      <Select value={advancedFilters.timeOfDay} onValueChange={(v) => handleFilterChange('timeOfDay', v)}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum</SelectItem>
+                          <SelectItem value="morning">Manhã</SelectItem>
+                          <SelectItem value="noon">Meio-dia</SelectItem>
+                          <SelectItem value="afternoon">Tarde</SelectItem>
+                          <SelectItem value="sunset">Pôr do Sol</SelectItem>
+                          <SelectItem value="night">Noite</SelectItem>
+                          <SelectItem value="blue-hour">Hora Azul</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
