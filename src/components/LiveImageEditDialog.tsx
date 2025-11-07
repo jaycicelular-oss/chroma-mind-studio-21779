@@ -366,16 +366,16 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Live Editor - Edição em Tempo Real
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 pr-4 max-h-[calc(95vh-100px)]">
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 h-full">
+          <div className="space-y-4 px-6 py-4 pb-6">
             {/* Upload Section */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Imagem para Editar</Label>
