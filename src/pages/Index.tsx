@@ -59,7 +59,7 @@ const Index = () => {
     facialExpression: "none",
     ethnicity: "none",
     age: "none",
-    bustSize: "none",
+    buttSize: "none",
     breastSize: "none",
     musculature: "none",
     contentType: "none",
@@ -114,7 +114,7 @@ const Index = () => {
     
     // Gender-specific filters
     if (selectedGender === 'female') {
-      if (advancedFilters.bustSize !== "none") filters.push(`${advancedFilters.bustSize} bust`);
+      if (advancedFilters.buttSize !== "none") filters.push(`${advancedFilters.buttSize} butt`);
       if (advancedFilters.breastSize !== "none") filters.push(`${advancedFilters.breastSize} breast size`);
     } else if (selectedGender === 'male') {
       if (advancedFilters.musculature !== "none") filters.push(`${advancedFilters.musculature} musculature`);

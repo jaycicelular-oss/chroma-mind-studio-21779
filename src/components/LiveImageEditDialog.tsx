@@ -41,7 +41,7 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
     facialExpression: "none",
     ethnicity: "none",
     age: "none",
-    bustSize: "none",
+    buttSize: "none",
     breastSize: "none",
     musculature: "none",
     armPosition: "none",
@@ -155,7 +155,7 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
       facialExpression: "expressão facial",
       ethnicity: "etnia",
       age: "idade",
-      bustSize: "tamanho do busto",
+      buttSize: "tamanho da bunda",
       breastSize: "tamanho dos seios",
       musculature: "musculatura",
       armPosition: "posição dos braços",
@@ -365,7 +365,7 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
       facialExpression: "none",
       ethnicity: "none",
       age: "none",
-      bustSize: "none",
+      buttSize: "none",
       breastSize: "none",
       musculature: "none",
       armPosition: "none",
@@ -840,8 +840,8 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
                       {selectedGender === 'female' && (
                         <>
                           <div className="space-y-2">
-                            <Label className="text-xs">Tamanho do Busto</Label>
-                            <Select value={advancedFilters.bustSize} onValueChange={(v) => handleFilterChange('bustSize', v)}>
+                            <Label className="text-xs">Tamanho da Bunda</Label>
+                            <Select value={advancedFilters.buttSize} onValueChange={(v) => handleFilterChange('buttSize', v)}>
                               <SelectTrigger className="h-9">
                                 <SelectValue />
                               </SelectTrigger>

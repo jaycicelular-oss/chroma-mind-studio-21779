@@ -30,7 +30,7 @@ export const GifTab = () => {
     facialExpression: '',
     ethnicity: '',
     age: '',
-    bustSize: '',
+    buttSize: '',
     breastSize: '',
     musculature: '',
     armPosition: '',

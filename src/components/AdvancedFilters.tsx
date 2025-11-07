@@ -20,7 +20,7 @@ interface AdvancedFiltersProps {
     facialExpression: string;
     ethnicity: string;
     age: string;
-    bustSize: string;
+    buttSize: string;
     breastSize: string;
     musculature: string;
     armPosition: string;
@@ -35,7 +35,7 @@ interface AdvancedFiltersProps {
 }
 
 export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: AdvancedFiltersProps) => {
-  const [customFilters, setCustomFilters] = useState<Record<string, { value: string; category: string }>>({});
+  const [customFilters, setCustomFilters] = useState<Record<string, { options: string[]; category: string; currentValue: string }>>({});
   const [customOptions, setCustomOptions] = useState<Record<string, string[]>>({
     hairColor: [],
     hairStyle: [],
@@ -46,6 +46,12 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
     pose: [],
     background: [],
     lighting: [],
+    ethnicity: [],
+    age: [],
+    height: [],
+    armPosition: [],
+    viewDistance: [],
+    timeOfDay: [],
   });
 
   // Load custom filters from localStorage
@@ -62,7 +68,7 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
   }, []);
 
   // Save custom filters to localStorage
-  const saveCustomFilters = (newFilters: Record<string, { value: string; category: string }>) => {
+  const saveCustomFilters = (newFilters: Record<string, { options: string[]; category: string; currentValue: string }>) => {
     setCustomFilters(newFilters);
     localStorage.setItem('customFilters', JSON.stringify(newFilters));
   };
@@ -86,9 +92,23 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
   };
 
   const handleAddCustomFilter = (name: string, value: string, category: string) => {
-    const newFilters = { ...customFilters, [name]: { value, category } };
-    saveCustomFilters(newFilters);
-    onFilterChange(name, value);
+    const existingFilter = customFilters[name];
+    if (existingFilter) {
+      // Add to existing filter options
+      const newFilters = {
+        ...customFilters,
+        [name]: {
+          ...existingFilter,
+          options: [...existingFilter.options, value],
+        },
+      };
+      saveCustomFilters(newFilters);
+    } else {
+      // Create new filter
+      const newFilters = { ...customFilters, [name]: { options: [value], category, currentValue: value } };
+      saveCustomFilters(newFilters);
+      onFilterChange(name, value);
+    }
   };
 
   const handleRemoveCustomFilter = (name: string) => {
@@ -96,6 +116,15 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
     delete newFilters[name];
     saveCustomFilters(newFilters);
     onFilterChange(name, '');
+  };
+
+  const handleCustomFilterChange = (name: string, value: string) => {
+    const newFilters = {
+      ...customFilters,
+      [name]: { ...customFilters[name], currentValue: value },
+    };
+    saveCustomFilters(newFilters);
+    onFilterChange(name, value);
   };
 
   const getCustomFiltersByCategory = (category: string) => {
@@ -122,17 +151,43 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
             
             {/* Custom Filters - Aparência */}
             {getCustomFiltersByCategory('appearance').map(([name, filter]) => (
-              <div key={name} className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 rounded-md backdrop-blur-glass border-gradient bg-card/40 text-sm">
-                  <span className="font-medium">{name}:</span> {filter.value}
+              <div key={name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">{name}</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveCustomFilter(name)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleRemoveCustomFilter(name)}
+                <Select 
+                  value={filter.currentValue} 
+                  onValueChange={(v) => {
+                    if (v === 'add-new') {
+                      const newValue = prompt(`Digite o novo valor para ${name}:`);
+                      if (newValue && newValue.trim()) {
+                        handleAddCustomFilter(name, newValue.trim(), filter.category);
+                        handleCustomFilterChange(name, newValue.trim());
+                      }
+                    } else {
+                      handleCustomFilterChange(name, v);
+                    }
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {filter.options.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                    <Separator className="my-2" />
+                    <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
 
@@ -279,7 +334,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Etnia */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Etnia</Label>
-            <Select value={filters.ethnicity} onValueChange={(v) => onFilterChange('ethnicity', v)}>
+            <Select value={filters.ethnicity} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newEthnicity = prompt('Digite a nova etnia:');
+                if (newEthnicity && newEthnicity.trim()) {
+                  addCustomOption('ethnicity', newEthnicity.trim());
+                  onFilterChange('ethnicity', newEthnicity.trim());
+                }
+              } else {
+                onFilterChange('ethnicity', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -291,6 +356,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="indigenous">Indígena</SelectItem>
                 <SelectItem value="latin">Latina</SelectItem>
                 <SelectItem value="middle-eastern">Oriente Médio</SelectItem>
+                {customOptions.ethnicity?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -298,7 +368,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Idade */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Idade</Label>
-            <Select value={filters.age} onValueChange={(v) => onFilterChange('age', v)}>
+            <Select value={filters.age} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newAge = prompt('Digite a nova faixa de idade:');
+                if (newAge && newAge.trim()) {
+                  addCustomOption('age', newAge.trim());
+                  onFilterChange('age', newAge.trim());
+                }
+              } else {
+                onFilterChange('age', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -307,6 +387,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="young-adult">Jovem Adulto</SelectItem>
                 <SelectItem value="adult">Adulto</SelectItem>
                 <SelectItem value="mature">Maduro</SelectItem>
+                {customOptions.age?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -328,17 +413,43 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
 
             {/* Custom Filters - Corpo */}
             {getCustomFiltersByCategory('body').map(([name, filter]) => (
-              <div key={name} className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 rounded-md backdrop-blur-glass border-gradient bg-card/40 text-sm">
-                  <span className="font-medium">{name}:</span> {filter.value}
+              <div key={name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">{name}</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveCustomFilter(name)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleRemoveCustomFilter(name)}
+                <Select 
+                  value={filter.currentValue} 
+                  onValueChange={(v) => {
+                    if (v === 'add-new') {
+                      const newValue = prompt(`Digite o novo valor para ${name}:`);
+                      if (newValue && newValue.trim()) {
+                        handleAddCustomFilter(name, newValue.trim(), filter.category);
+                        handleCustomFilterChange(name, newValue.trim());
+                      }
+                    } else {
+                      handleCustomFilterChange(name, v);
+                    }
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {filter.options.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                    <Separator className="my-2" />
+                    <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
 
@@ -380,10 +491,10 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Filtros específicos de gênero */}
           {selectedGender === 'female' && (
             <>
-              {/* Tamanho do Busto */}
+              {/* Tamanho da Bunda */}
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Tamanho do Busto</Label>
-                <Select value={filters.bustSize} onValueChange={(v) => onFilterChange('bustSize', v)}>
+                <Label className="text-xs text-muted-foreground">Tamanho da Bunda</Label>
+                <Select value={filters.buttSize} onValueChange={(v) => onFilterChange('buttSize', v)}>
                   <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                     <SelectValue />
                   </SelectTrigger>
@@ -460,7 +571,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Altura */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Altura</Label>
-            <Select value={filters.height} onValueChange={(v) => onFilterChange('height', v)}>
+            <Select value={filters.height} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newHeight = prompt('Digite a nova altura:');
+                if (newHeight && newHeight.trim()) {
+                  addCustomOption('height', newHeight.trim());
+                  onFilterChange('height', newHeight.trim());
+                }
+              } else {
+                onFilterChange('height', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -470,6 +591,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="average">Médio</SelectItem>
                 <SelectItem value="tall">Alto</SelectItem>
                 <SelectItem value="very-tall">Muito Alto</SelectItem>
+                {customOptions.height?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -528,17 +654,43 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
 
             {/* Custom Filters - Pose */}
             {getCustomFiltersByCategory('pose').map(([name, filter]) => (
-              <div key={name} className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 rounded-md backdrop-blur-glass border-gradient bg-card/40 text-sm">
-                  <span className="font-medium">{name}:</span> {filter.value}
+              <div key={name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">{name}</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveCustomFilter(name)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleRemoveCustomFilter(name)}
+                <Select 
+                  value={filter.currentValue} 
+                  onValueChange={(v) => {
+                    if (v === 'add-new') {
+                      const newValue = prompt(`Digite o novo valor para ${name}:`);
+                      if (newValue && newValue.trim()) {
+                        handleAddCustomFilter(name, newValue.trim(), filter.category);
+                        handleCustomFilterChange(name, newValue.trim());
+                      }
+                    } else {
+                      handleCustomFilterChange(name, v);
+                    }
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {filter.options.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                    <Separator className="my-2" />
+                    <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
 
@@ -579,7 +731,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Posição dos Braços */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Posição dos Braços</Label>
-            <Select value={filters.armPosition} onValueChange={(v) => onFilterChange('armPosition', v)}>
+            <Select value={filters.armPosition} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newPosition = prompt('Digite a nova posição dos braços:');
+                if (newPosition && newPosition.trim()) {
+                  addCustomOption('armPosition', newPosition.trim());
+                  onFilterChange('armPosition', newPosition.trim());
+                }
+              } else {
+                onFilterChange('armPosition', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -590,6 +752,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="raised">Levantados</SelectItem>
                 <SelectItem value="behind">Atrás do corpo</SelectItem>
                 <SelectItem value="on-hips">Na cintura</SelectItem>
+                {customOptions.armPosition?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -597,7 +764,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Distância da Visualização */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Distância da Visualização</Label>
-            <Select value={filters.viewDistance} onValueChange={(v) => onFilterChange('viewDistance', v)}>
+            <Select value={filters.viewDistance} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newDistance = prompt('Digite a nova distância de visualização:');
+                if (newDistance && newDistance.trim()) {
+                  addCustomOption('viewDistance', newDistance.trim());
+                  onFilterChange('viewDistance', newDistance.trim());
+                }
+              } else {
+                onFilterChange('viewDistance', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -607,6 +784,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="medium">Médio</SelectItem>
                 <SelectItem value="full-body">Corpo Inteiro</SelectItem>
                 <SelectItem value="far">Afastado</SelectItem>
+                {customOptions.viewDistance?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -628,17 +810,43 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
 
             {/* Custom Filters - Ambiente */}
             {getCustomFiltersByCategory('environment').map(([name, filter]) => (
-              <div key={name} className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 rounded-md backdrop-blur-glass border-gradient bg-card/40 text-sm">
-                  <span className="font-medium">{name}:</span> {filter.value}
+              <div key={name} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground">{name}</Label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleRemoveCustomFilter(name)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleRemoveCustomFilter(name)}
+                <Select 
+                  value={filter.currentValue} 
+                  onValueChange={(v) => {
+                    if (v === 'add-new') {
+                      const newValue = prompt(`Digite o novo valor para ${name}:`);
+                      if (newValue && newValue.trim()) {
+                        handleAddCustomFilter(name, newValue.trim(), filter.category);
+                        handleCustomFilterChange(name, newValue.trim());
+                      }
+                    } else {
+                      handleCustomFilterChange(name, v);
+                    }
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {filter.options.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                    <Separator className="my-2" />
+                    <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
 
@@ -680,7 +888,17 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
           {/* Hora do Dia */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Hora do Dia</Label>
-            <Select value={filters.timeOfDay} onValueChange={(v) => onFilterChange('timeOfDay', v)}>
+            <Select value={filters.timeOfDay} onValueChange={(v) => {
+              if (v === 'add-new') {
+                const newTime = prompt('Digite a nova hora do dia:');
+                if (newTime && newTime.trim()) {
+                  addCustomOption('timeOfDay', newTime.trim());
+                  onFilterChange('timeOfDay', newTime.trim());
+                }
+              } else {
+                onFilterChange('timeOfDay', v);
+              }
+            }}>
               <SelectTrigger className="backdrop-blur-glass border-gradient bg-card/40">
                 <SelectValue />
               </SelectTrigger>
@@ -691,6 +909,11 @@ export const AdvancedFilters = ({ filters, onFilterChange, selectedGender }: Adv
                 <SelectItem value="evening">Entardecer</SelectItem>
                 <SelectItem value="night">Noite</SelectItem>
                 <SelectItem value="golden-hour">Hora Dourada</SelectItem>
+                {customOptions.timeOfDay?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+                <Separator className="my-2" />
+                <SelectItem value="add-new" className="text-primary font-medium">+ Adicionar novo</SelectItem>
               </SelectContent>
             </Select>
           </div>
