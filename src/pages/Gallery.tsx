@@ -60,7 +60,7 @@ export default function Gallery() {
       const tableName = type === 'image' ? 'generated_images' : type === 'gif' ? 'generated_gifs' : 'generated_frames';
       
       for (const id of selectedItems) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from(tableName)
           .delete()
           .eq('id', id);
@@ -100,7 +100,7 @@ export default function Gallery() {
 
     try {
       const tableName = type === 'image' ? 'generated_images' : type === 'gif' ? 'generated_gifs' : 'generated_frames';
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(tableName)
         .delete()
         .eq('id', id);
@@ -131,7 +131,7 @@ export default function Gallery() {
   const handleSave = async (id: string, type: 'image' | 'gif' | 'frame') => {
     try {
       const tableName = type === 'image' ? 'generated_images' : type === 'gif' ? 'generated_gifs' : 'generated_frames';
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(tableName)
         .update({ saved: true })
         .eq('id', id);

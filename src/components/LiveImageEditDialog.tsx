@@ -181,8 +181,25 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
     return parts.join(", ");
   };
 
+  const ensureDataUrl = async (src: string): Promise<string> => {
+    if (!src) return src;
+    if (src.startsWith('data:')) return src;
+    let absolute = src;
+    if (!src.startsWith('http')) {
+      absolute = `${window.location.origin}${src.startsWith('/') ? '' : '/'}${src}`;
+    }
+    const resp = await fetch(absolute);
+    const blob = await resp.blob();
+    return await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.readAsDataURL(blob);
+    });
+  };
+
   const handleEditWithPrompt = async (promptToUse: string) => {
-    const imageToEdit = editedImageUrl || uploadedImage || currentImageUrl;
+    const baseImage = editedImageUrl || uploadedImage || currentImageUrl;
+    const imageToEdit = await ensureDataUrl(baseImage);
     setIsEditing(true);
 
     try {
@@ -257,7 +274,7 @@ export const LiveImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }
       
       if (user) {
         const finalPrompt = buildPromptFromFilters();
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('generated_images')
           .insert({
             user_id: user.id,

@@ -11,7 +11,7 @@ export const useGifs = (userId?: string) => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('generated_gifs')
         .select('*')
         .eq('user_id', userId)
@@ -25,7 +25,7 @@ export const useGifs = (userId?: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('generated_gifs')
         .delete()
         .eq('id', id);
@@ -49,7 +49,7 @@ export const useGifs = (userId?: string) => {
 
   const saveMutation = useMutation({
     mutationFn: async ({ id, saved }: { id: string; saved: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('generated_gifs')
         .update({ saved })
         .eq('id', id);

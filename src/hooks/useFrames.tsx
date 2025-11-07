@@ -11,7 +11,7 @@ export const useFrames = (userId?: string) => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('generated_frames')
         .select('*, characters(*)')
         .eq('user_id', userId)
@@ -25,7 +25,7 @@ export const useFrames = (userId?: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('generated_frames')
         .delete()
         .eq('id', id);
@@ -49,7 +49,7 @@ export const useFrames = (userId?: string) => {
 
   const saveMutation = useMutation({
     mutationFn: async ({ id, saved }: { id: string; saved: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('generated_frames')
         .update({ saved })
         .eq('id', id);

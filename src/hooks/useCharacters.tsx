@@ -31,7 +31,7 @@ export const useCharacters = () => {
   const fetchCharacters = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('characters')
         .select('*')
         .order('created_at', { ascending: false });
@@ -55,7 +55,7 @@ export const useCharacters = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Usuário não autenticado");
 
-      const { error } = await supabase.from('characters').insert({
+      const { error } = await (supabase as any).from('characters').insert({
         user_id: userData.user.id,
         name: characterData.name,
         family_name: characterData.family_name,
@@ -98,7 +98,7 @@ export const useCharacters = () => {
   const deleteCharacter = async (id: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('characters')
         .delete()
         .eq('id', id);

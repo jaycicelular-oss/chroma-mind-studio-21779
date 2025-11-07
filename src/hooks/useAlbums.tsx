@@ -27,7 +27,7 @@ export const useAlbums = () => {
   const fetchAlbums = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('albums')
         .select('*')
         .order('created_at', { ascending: false });
@@ -51,7 +51,7 @@ export const useAlbums = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Usuário não autenticado");
 
-      const { error } = await supabase.from('albums').insert({
+      const { error } = await (supabase as any).from('albums').insert({
         user_id: userData.user.id,
         name,
         description,
@@ -79,7 +79,7 @@ export const useAlbums = () => {
   const updateAlbum = async (id: string, name: string, description?: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('albums')
         .update({ name, description })
         .eq('id', id);
@@ -106,7 +106,7 @@ export const useAlbums = () => {
   const deleteAlbum = async (id: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('albums')
         .delete()
         .eq('id', id);
@@ -132,7 +132,7 @@ export const useAlbums = () => {
 
   const addItemToAlbum = async (albumId: string, contentId: string, contentType: AlbumItem['content_type']) => {
     try {
-      const { error } = await supabase.from('album_items').insert({
+      const { error } = await (supabase as any).from('album_items').insert({
         album_id: albumId,
         content_id: contentId,
         content_type: contentType,
@@ -155,7 +155,7 @@ export const useAlbums = () => {
 
   const removeItemFromAlbum = async (itemId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('album_items')
         .delete()
         .eq('id', itemId);

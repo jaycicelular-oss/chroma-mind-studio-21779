@@ -65,6 +65,22 @@ export const ImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }: Im
     }
   };
 
+  const ensureDataUrl = async (src: string): Promise<string> => {
+    if (!src) return src;
+    if (src.startsWith('data:')) return src;
+    let absolute = src;
+    if (!src.startsWith('http')) {
+      absolute = `${window.location.origin}${src.startsWith('/') ? '' : '/'}${src}`;
+    }
+    const resp = await fetch(absolute);
+    const blob = await resp.blob();
+    return await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.readAsDataURL(blob);
+    });
+  };
+
   const handleEdit = async () => {
     if (!editPrompt.trim()) {
       toast({
@@ -75,8 +91,8 @@ export const ImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }: Im
       return;
     }
 
-    // Usar imagem carregada se disponível, senão usar a original
-    const imageToEdit = uploadedImage || imageUrl;
+    const baseImage = uploadedImage || imageUrl;
+    const imageToEdit = await ensureDataUrl(baseImage);
 
     setIsEditing(true);
     try {
@@ -145,7 +161,7 @@ export const ImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }: Im
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          const { error } = await supabase
+          const { error } = await (supabase as any)
             .from('generated_images')
             .insert({
               user_id: user.id,
