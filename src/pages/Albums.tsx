@@ -4,7 +4,7 @@ import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, FolderPlus, Edit, Trash2, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -68,6 +68,7 @@ export default function Albums() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Criar Novo Álbum</DialogTitle>
+                <DialogDescription className="sr-only">Informe nome e descrição para criar um novo álbum.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -132,6 +133,7 @@ export default function Albums() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Editar Álbum</DialogTitle>
+                        <DialogDescription className="sr-only">Atualize nome e descrição do álbum selecionado.</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -208,6 +208,7 @@ export const ImageEditDialog = ({ isOpen, onClose, imageUrl, onImageEdited }: Im
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Imagem</DialogTitle>
+          <DialogDescription className="sr-only">Use o campo abaixo para descrever a edição desejada e aplique para ver o resultado.</DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

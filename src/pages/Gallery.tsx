@@ -423,7 +423,7 @@ export default function Gallery() {
         </Tabs>
 
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-5xl max-h-[90vh]">
+          <DialogContent aria-describedby={undefined} className="max-w-5xl max-h-[90vh]">
             {selectedImage && (
               <div className="space-y-4">
                 <div className="max-h-[60vh] overflow-hidden flex items-center justify-center bg-black/5 rounded-lg">
@@ -484,7 +484,7 @@ export default function Gallery() {
         </Dialog>
 
         <Dialog open={showAlbumDialog} onOpenChange={setShowAlbumDialog}>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Selecionar Álbum</DialogTitle>
             </DialogHeader>

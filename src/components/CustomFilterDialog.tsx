@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,7 @@ export const CustomFilterDialog = ({ onAdd, category }: CustomFilterDialogProps)
       <DialogContent className="backdrop-blur-glass border-gradient bg-card">
         <DialogHeader>
           <DialogTitle>Adicionar Filtro - {category}</DialogTitle>
+          <DialogDescription className="sr-only">Preencha nome e valor para adicionar um filtro personalizado nesta categoria.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">

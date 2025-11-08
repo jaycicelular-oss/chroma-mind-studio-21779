@@ -63,9 +63,11 @@ export const GifTab = () => {
         description: "Seu GIF animado foi criado com sucesso.",
       });
     } catch (error: any) {
+      const msg = String(error?.message || "Tente novamente mais tarde");
+      const isCredits = msg.includes("Créditos insuficientes") || msg.includes("payment_required") || msg.includes("Not enough credits") || msg.includes("402");
       toast({
-        title: "Erro ao gerar GIF",
-        description: error.message,
+        title: isCredits ? "Créditos insuficientes" : "Erro ao gerar GIF",
+        description: isCredits ? "Você ficou sem créditos. Tente novamente mais tarde ou ajuste o plano." : msg,
         variant: "destructive"
       });
     } finally {

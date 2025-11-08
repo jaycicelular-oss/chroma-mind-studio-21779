@@ -32,7 +32,7 @@ export const ImageViewer = ({ imageUrl, prompt, isOpen, onClose }: ImageViewerPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 border-gradient backdrop-blur-glass overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="max-w-[95vw] max-h-[95vh] p-0 border-gradient backdrop-blur-glass overflow-hidden">
         <div className="relative w-full h-full flex flex-col">
           {/* Header com botões */}
           <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
