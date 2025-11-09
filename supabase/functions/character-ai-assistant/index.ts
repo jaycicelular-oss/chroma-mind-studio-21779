@@ -22,6 +22,12 @@ serve(async (req) => {
 Ajude o usuário a criar descrições visuais ricas e detalhadas baseadas nas informações do personagem fornecidas.
 Seja criativo e sugira detalhes visuais como expressões faciais, poses, roupas, iluminação e cenário.
 
+IMPORTANTE: 
+- Permita qualquer tipo de pose ou posição corporal (sentado, deitado, de pé, agachado, dançando, etc.)
+- SEMPRE inclua descrições de roupas apropriadas para os personagens
+- NUNCA sugira ou permita nudez, conteúdo explícito ou inadequado
+- Todos os personagens devem estar vestidos de forma apropriada
+
 ${characterData ? `Informações do personagem atual:
 - Nome: ${characterData.name || 'Não definido'}
 - Gênero: ${characterData.gender || 'Não definido'}

@@ -29,8 +29,25 @@ serve(async (req) => {
 
     console.log('Generating image with prompt:', prompt);
 
-    // Enhance prompt based on style
-    let enhancedPrompt = prompt;
+    // Content moderation - block nudity but allow all poses
+    const nudityKeywords = [
+      'nude', 'naked', 'nudity', 'nude body', 'sem roupa', 'sem roupas', 'nu', 'nua', 
+      'pelado', 'pelada', 'despido', 'despida', 'genitals', 'genitalia', 'genital',
+      'topless', 'bottomless', 'explicit', 'nsfw', 'pornographic', 'porn'
+    ];
+    
+    const promptLower = prompt.toLowerCase();
+    const hasNudity = nudityKeywords.some(keyword => promptLower.includes(keyword));
+    
+    if (hasNudity) {
+      return new Response(
+        JSON.stringify({ error: 'Conteúdo inadequado detectado. Por favor, remova referências a nudez do prompt.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Enhance prompt based on style with explicit content guidelines
+    let enhancedPrompt = `${prompt}, clothed, wearing clothes, no nudity, appropriate content`;
     switch (style) {
       case 'photorealistic':
         enhancedPrompt += ', ultra high resolution, photorealistic, cinematic lighting, 8K quality';

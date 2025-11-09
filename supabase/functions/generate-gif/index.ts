@@ -29,8 +29,25 @@ serve(async (req) => {
 
     console.log('Generating GIF with prompt:', prompt);
 
-    // Enhance prompt for GIF generation with movement instructions
-    let enhancedPrompt = `Create an animated GIF with realistic movements: ${prompt}. Add subtle, natural motion like breathing, hair moving, slight body sway, or environmental movement.`;
+    // Content moderation - block nudity but allow all poses
+    const nudityKeywords = [
+      'nude', 'naked', 'nudity', 'nude body', 'sem roupa', 'sem roupas', 'nu', 'nua', 
+      'pelado', 'pelada', 'despido', 'despida', 'genitals', 'genitalia', 'genital',
+      'topless', 'bottomless', 'explicit', 'nsfw', 'pornographic', 'porn'
+    ];
+    
+    const promptLower = prompt.toLowerCase();
+    const hasNudity = nudityKeywords.some(keyword => promptLower.includes(keyword));
+    
+    if (hasNudity) {
+      return new Response(
+        JSON.stringify({ error: 'Conteúdo inadequado detectado. Por favor, remova referências a nudez do prompt.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Enhance prompt for GIF generation with movement instructions and content guidelines
+    let enhancedPrompt = `Create an animated GIF with realistic movements: ${prompt}. Add subtle, natural motion like breathing, hair moving, slight body sway, or environmental movement. Ensure all subjects are clothed and wearing appropriate clothing, no nudity.`;
     
     switch (style) {
       case 'photorealistic':
