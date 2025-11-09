@@ -165,13 +165,26 @@ const Index = () => {
         },
       });
 
-      if (error) throw error;
-
-      if (data.error) {
-        throw new Error(data.error);
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
       }
 
-      if (data.success && data.image) {
+      if (data?.error) {
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits") || errorMsg.includes("402");
+        
+        toast({
+          title: isCredits ? "Créditos insuficientes" : "Erro ao gerar imagem",
+          description: isCredits 
+            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage para continuar gerando imagens." 
+            : errorMsg,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.success && data?.image) {
         setCurrentImage(data.image.image_url);
         setCurrentPrompt(prompt);
         queryClient.invalidateQueries({ queryKey: ['generated-images'] });
@@ -186,11 +199,14 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Error generating image:', error);
-      const msg = String(error?.message || "Tente novamente mais tarde");
-      const isCredits = msg.includes("Créditos insuficientes") || msg.includes("payment_required") || msg.includes("Not enough credits") || msg.includes("402");
+      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
+      const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits") || errorMsg.includes("402");
+      
       toast({
         title: isCredits ? "Créditos insuficientes" : "Erro ao gerar imagem",
-        description: isCredits ? "Você ficou sem créditos. Tente novamente mais tarde ou ajuste o plano." : msg,
+        description: isCredits 
+          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+          : "Ocorreu um erro ao gerar a imagem. Tente novamente.",
         variant: "destructive",
       });
     } finally {

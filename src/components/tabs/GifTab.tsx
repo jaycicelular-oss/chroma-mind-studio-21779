@@ -56,18 +56,41 @@ export const GifTab = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+        
+        toast({
+          title: isCredits ? "Créditos insuficientes" : "Erro",
+          description: isCredits 
+            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+            : errorMsg.includes("Conteúdo inadequado") 
+            ? errorMsg 
+            : "Erro ao gerar GIF. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "GIF gerado!",
         description: "Seu GIF animado foi criado com sucesso.",
       });
     } catch (error: any) {
-      const msg = String(error?.message || "Tente novamente mais tarde");
-      const isCredits = msg.includes("Créditos insuficientes") || msg.includes("payment_required") || msg.includes("Not enough credits") || msg.includes("402");
+      console.error('Error generating GIF:', error);
+      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
+      const isCredits = errorMsg.includes("Créditos") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+      
       toast({
         title: isCredits ? "Créditos insuficientes" : "Erro ao gerar GIF",
-        description: isCredits ? "Você ficou sem créditos. Tente novamente mais tarde ou ajuste o plano." : msg,
+        description: isCredits 
+          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+          : "Ocorreu um erro ao gerar o GIF. Tente novamente.",
         variant: "destructive"
       });
     } finally {

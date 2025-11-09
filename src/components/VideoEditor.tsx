@@ -65,17 +65,38 @@ export const VideoEditor = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+        
+        toast({
+          title: isCredits ? "Créditos insuficientes" : "Erro no chat",
+          description: isCredits 
+            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+            : "Erro ao processar mensagem. Tente novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       const aiResponse = { role: "assistant", content: data.response };
       setChatHistory(prev => [...prev, aiResponse]);
 
     } catch (error: any) {
-      const msg = String(error?.message || "Tente novamente mais tarde");
-      const isCredits = msg.includes("Créditos insuficientes") || msg.includes("payment_required") || msg.includes("Not enough credits") || msg.includes("402");
+      console.error('Error in AI chat:', error);
+      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
+      const isCredits = errorMsg.includes("Créditos") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+      
       toast({
         title: isCredits ? "Créditos insuficientes" : "Erro no chat",
-        description: isCredits ? "Você ficou sem créditos. Tente novamente mais tarde ou ajuste o plano." : msg,
+        description: isCredits 
+          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+          : "Ocorreu um erro no chat. Tente novamente.",
         variant: "destructive"
       });
     }

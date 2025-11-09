@@ -113,9 +113,26 @@ export const CharacterTab = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
-      if (data.suggestion) {
+      if (data?.error) {
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+        
+        toast({
+          title: isCredits ? "Créditos insuficientes" : "Erro ao gerar sugestão",
+          description: isCredits 
+            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+            : "Erro ao processar sugestão. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.suggestion) {
         setAiSuggestion(data.suggestion);
         toast({
           title: "Sugestão gerada!",
@@ -124,11 +141,14 @@ export const CharacterTab = () => {
       }
     } catch (error: any) {
       console.error('Error calling AI assistant:', error);
-      const msg = String(error?.message || "Tente novamente mais tarde");
-      const isCredits = msg.includes("Créditos insuficientes") || msg.includes("payment_required") || msg.includes("Not enough credits") || msg.includes("402");
+      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
+      const isCredits = errorMsg.includes("Créditos") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+      
       toast({
         title: isCredits ? "Créditos insuficientes" : "Erro ao gerar sugestão",
-        description: isCredits ? "Você ficou sem créditos. Tente novamente mais tarde ou ajuste o plano." : msg,
+        description: isCredits 
+          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+          : "Ocorreu um erro ao gerar a sugestão. Tente novamente.",
         variant: "destructive",
       });
     } finally {
