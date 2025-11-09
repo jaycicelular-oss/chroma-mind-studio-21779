@@ -80,13 +80,29 @@ IMPORTANTE: Faça APENAS estas alterações. Todo o resto da imagem deve permane
         return new Response(
           JSON.stringify({ error: 'Créditos insuficientes. Por favor, adicione créditos em Settings -> Workspace -> Usage.' }),
           { 
-            status: 402,
+            status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
       
-      throw new Error(`Erro da API: ${response.status}`);
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ error: `Erro da API: ${response.status}` }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const data = await response.json();

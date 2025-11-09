@@ -165,22 +165,34 @@ const Index = () => {
         },
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
-
       if (data?.error) {
         const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits") || errorMsg.includes("402");
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
         
         toast({
-          title: isCredits ? "Créditos insuficientes" : "Erro ao gerar imagem",
+          title: isCredits ? "⚠️ Créditos Insuficientes" : "❌ Erro ao gerar imagem",
           description: isCredits 
             ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage para continuar gerando imagens." 
             : errorMsg,
           variant: "destructive",
         });
+        setGenerating(false);
+        return;
+      }
+      
+      if (error) {
+        console.error('Supabase function error:', error);
+        const errorMsg = error.message || 'Erro desconhecido';
+        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
+        
+        toast({
+          title: isCredits ? "⚠️ Créditos Insuficientes" : "❌ Erro ao gerar imagem",
+          description: isCredits 
+            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
+            : "Ocorreu um erro ao gerar a imagem. Tente novamente.",
+          variant: "destructive",
+        });
+        setGenerating(false);
         return;
       }
 
