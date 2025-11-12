@@ -122,9 +122,7 @@ const Index = () => {
       enhancedPrompt += ", " + filters.join(", ");
     }
     
-    if (outputType === "gif") {
-      enhancedPrompt += ", animated, smooth motion, realistic movement";
-    } else if (outputType === "frames") {
+    if (outputType === "frames") {
       enhancedPrompt += ", cinematic sequence, storyboard style, multiple perspectives";
     }
     
@@ -183,9 +181,7 @@ const Index = () => {
         queryClient.invalidateQueries({ queryKey: ['generated-images'] });
         toast({
           title: "Sucesso!",
-          description: outputType === "gif" 
-            ? "GIF animado gerado com sucesso" 
-            : outputType === "frames"
+          description: outputType === "frames"
             ? "Sequência de frames gerada com sucesso"
             : "Imagem gerada com sucesso",
         });
