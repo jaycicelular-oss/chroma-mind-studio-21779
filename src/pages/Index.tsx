@@ -2,18 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { ImageDisplay } from "@/components/ImageDisplay";
-import { GifDisplay } from "@/components/GifDisplay";
 import { FramesDisplay } from "@/components/FramesDisplay";
-import { VideoDisplay } from "@/components/VideoDisplay";
 import { CharacterDisplay } from "@/components/CharacterDisplay";
 import { BackgroundEffects } from "@/components/BackgroundEffects";
 import { Auth } from "@/components/Auth";
 import { ImageViewer } from "@/components/ImageViewer";
 import { ContentTabs } from "@/components/ContentTabs";
 import { ImageTab } from "@/components/tabs/ImageTab";
-import { GifTab } from "@/components/tabs/GifTab";
 import { FramesTab } from "@/components/tabs/FramesTab";
-import { VideoTab } from "@/components/tabs/VideoTab";
 import { CharacterTab } from "@/components/tabs/CharacterTab";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,9 +33,7 @@ const Index = () => {
   const [outputType, setOutputType] = useState("image");
   const [selectedGender, setSelectedGender] = useState<'none' | 'male' | 'female'>('none');
   const [currentImage, setCurrentImage] = useState(heroImage);
-  const [currentGif, setCurrentGif] = useState<string | undefined>(undefined);
   const [currentFrames, setCurrentFrames] = useState<string[] | undefined>(undefined);
-  const [currentVideo, setCurrentVideo] = useState<string | undefined>(undefined);
   const [currentCharacter, setCurrentCharacter] = useState<any>(undefined);
   const [currentPrompt, setCurrentPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -76,12 +70,8 @@ const Index = () => {
 
   const renderDisplay = () => {
     switch (activeTab) {
-      case "gif":
-        return <GifDisplay gifUrl={currentGif} alt="GIF Gerado" />;
       case "frames":
         return <FramesDisplay frameUrls={currentFrames} alt="Frames Gerados" />;
-      case "video":
-        return <VideoDisplay videoUrl={currentVideo} alt="Vídeo Gerado" />;
       case "character":
         return <CharacterDisplay character={currentCharacter} />;
       default:
@@ -132,9 +122,7 @@ const Index = () => {
       enhancedPrompt += ", " + filters.join(", ");
     }
     
-    if (outputType === "gif") {
-      enhancedPrompt += ", animated, smooth motion, realistic movement";
-    } else if (outputType === "frames") {
+    if (outputType === "frames") {
       enhancedPrompt += ", cinematic sequence, storyboard style, multiple perspectives";
     }
     
@@ -193,9 +181,7 @@ const Index = () => {
         queryClient.invalidateQueries({ queryKey: ['generated-images'] });
         toast({
           title: "Sucesso!",
-          description: outputType === "gif" 
-            ? "GIF animado gerado com sucesso" 
-            : outputType === "frames"
+          description: outputType === "frames"
             ? "Sequência de frames gerada com sucesso"
             : "Imagem gerada com sucesso",
         });
@@ -333,9 +319,7 @@ const Index = () => {
                         isGenerating={generating}
                       />
                     ),
-                    gifTab: <GifTab />,
                     framesTab: <FramesTab />,
-                    videoTab: <VideoTab />,
                     characterTab: <CharacterTab />,
                   }}
                 </ContentTabs>
