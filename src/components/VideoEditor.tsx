@@ -71,15 +71,11 @@ export const VideoEditor = () => {
       }
 
       if (data?.error) {
-        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-        
+        console.error('Edge function returned error:', data.error);
         toast({
-          title: isCredits ? "Créditos insuficientes" : "Erro no chat",
-          description: isCredits 
-            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-            : "Erro ao processar mensagem. Tente novamente.",
-          variant: "destructive"
+          title: "Erro",
+          description: data.error,
+          variant: "destructive",
         });
         return;
       }
@@ -89,14 +85,9 @@ export const VideoEditor = () => {
 
     } catch (error: any) {
       console.error('Error in AI chat:', error);
-      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
-      const isCredits = errorMsg.includes("Créditos") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-      
       toast({
-        title: isCredits ? "Créditos insuficientes" : "Erro no chat",
-        description: isCredits 
-          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-          : "Ocorreu um erro no chat. Tente novamente.",
+        title: "Erro no chat",
+        description: "Ocorreu um erro no chat. Tente novamente.",
         variant: "destructive"
       });
     }

@@ -98,13 +98,6 @@ serve(async (req) => {
           );
         }
         
-        if (response.status === 402) {
-          return new Response(
-            JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos em Settings -> Workspace -> Usage para continuar gerando GIFs.' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
         return new Response(
           JSON.stringify({ error: `Erro na API de IA: ${response.status}` }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

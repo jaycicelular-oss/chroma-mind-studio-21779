@@ -76,16 +76,6 @@ IMPORTANTE: Faça APENAS estas alterações. Todo o resto da imagem deve permane
       const errorText = await response.text();
       console.error('Lovable AI error:', response.status, errorText);
       
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Por favor, adicione créditos em Settings -> Workspace -> Usage.' }),
-          { 
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),

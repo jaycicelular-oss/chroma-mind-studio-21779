@@ -62,16 +62,10 @@ export const GifTab = () => {
       }
 
       if (data?.error) {
-        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-        
+        console.error('Edge function returned error:', data.error);
         toast({
-          title: isCredits ? "Créditos insuficientes" : "Erro",
-          description: isCredits 
-            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-            : errorMsg.includes("Conteúdo inadequado") 
-            ? errorMsg 
-            : "Erro ao gerar GIF. Tente novamente.",
+          title: "Erro",
+          description: data.error,
           variant: "destructive",
         });
         return;
@@ -83,14 +77,9 @@ export const GifTab = () => {
       });
     } catch (error: any) {
       console.error('Error generating GIF:', error);
-      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
-      const isCredits = errorMsg.includes("Créditos") || errorMsg.includes("402") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-      
       toast({
-        title: isCredits ? "Créditos insuficientes" : "Erro ao gerar GIF",
-        description: isCredits 
-          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-          : "Ocorreu um erro ao gerar o GIF. Tente novamente.",
+        title: "Erro ao gerar GIF",
+        description: "Ocorreu um erro ao gerar o GIF. Tente novamente.",
         variant: "destructive"
       });
     } finally {

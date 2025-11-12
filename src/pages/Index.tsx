@@ -166,14 +166,10 @@ const Index = () => {
       });
 
       if (data?.error) {
-        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-        
+        console.error('Edge function returned error:', data.error);
         toast({
-          title: isCredits ? "⚠️ Créditos Insuficientes" : "❌ Erro ao gerar imagem",
-          description: isCredits 
-            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage para continuar gerando imagens." 
-            : errorMsg,
+          title: "Erro",
+          description: data.error,
           variant: "destructive",
         });
         setGenerating(false);
@@ -182,14 +178,9 @@ const Index = () => {
       
       if (error) {
         console.error('Supabase function error:', error);
-        const errorMsg = error.message || 'Erro desconhecido';
-        const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits");
-        
         toast({
-          title: isCredits ? "⚠️ Créditos Insuficientes" : "❌ Erro ao gerar imagem",
-          description: isCredits 
-            ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-            : "Ocorreu um erro ao gerar a imagem. Tente novamente.",
+          title: "Erro",
+          description: "Erro ao gerar imagem. Tente novamente.",
           variant: "destructive",
         });
         setGenerating(false);
@@ -211,14 +202,9 @@ const Index = () => {
       }
     } catch (error: any) {
       console.error('Error generating image:', error);
-      const errorMsg = error?.message || error?.msg || JSON.stringify(error);
-      const isCredits = errorMsg.includes("Créditos insuficientes") || errorMsg.includes("payment_required") || errorMsg.includes("Not enough credits") || errorMsg.includes("402");
-      
       toast({
-        title: isCredits ? "Créditos insuficientes" : "Erro ao gerar imagem",
-        description: isCredits 
-          ? "Seus créditos acabaram. Adicione mais créditos em Settings → Workspace → Usage." 
-          : "Ocorreu um erro ao gerar a imagem. Tente novamente.",
+        title: "Erro ao gerar imagem",
+        description: "Ocorreu um erro ao gerar a imagem. Tente novamente.",
         variant: "destructive",
       });
     } finally {

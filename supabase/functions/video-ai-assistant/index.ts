@@ -74,13 +74,6 @@ Seja conciso e prático nas suas sugestões.`;
         );
       }
       
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos em Settings -> Workspace -> Usage para continuar.' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
       return new Response(
         JSON.stringify({ error: `Erro na API de IA: ${response.status}` }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
