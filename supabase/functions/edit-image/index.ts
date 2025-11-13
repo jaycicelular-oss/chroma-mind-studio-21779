@@ -12,98 +12,24 @@ serve(async (req) => {
 
   try {
     const { imageUrl, editPrompt } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY não configurada');
-    }
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
     console.log('Editing image with prompt:', editPrompt);
 
-    const systemPrompt = `Você é um editor de imagens avançado com precisão cirúrgica. Siga estas regras críticas:
-
-1. ALTERAÇÕES PRECISAS: Faça APENAS as modificações explicitamente solicitadas. Se pedirem "mudar para gordo", altere SOMENTE o tipo físico, mantendo tudo mais idêntico.
-
-2. PRESERVAÇÃO TOTAL: Mantenha 100% de:
-   - Identidade facial (rosto, traços, cor da pele)
-   - Características não mencionadas (cabelo, olhos, roupas, acessórios)
-   - Qualidade visual (resolução, iluminação, cores, textura)
-   - Composição e enquadramento da cena
-   - Fundo e contexto ambiental
-
-3. CONSISTÊNCIA: A pessoa editada deve ser reconhecível como a mesma pessoa, apenas com as alterações específicas aplicadas.
-
-4. QUALIDADE: Mantenha alta fidelidade visual. Nada de artefatos, distorções ou perda de qualidade.
-
-5. NATURALIDADE: As alterações devem parecer naturais e coerentes com o resto da imagem.`;
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Aplique estas modificações de forma precisa e cirúrgica: ${editPrompt}
-
-IMPORTANTE: Faça APENAS estas alterações. Todo o resto da imagem deve permanecer idêntico ao original.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageUrl
-                }
-              }
-            ]
-          }
-        ],
-        modalities: ['image', 'text'],
-        quality: 'high'
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Edit API error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
+    if (!OPENAI_API_KEY) {
       return new Response(
-        JSON.stringify({ error: `Erro da API: ${response.status}` }),
+        JSON.stringify({ error: 'OpenAI API key não configurada' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await response.json();
-    const editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!editedImageUrl) {
-      console.error('No edited image URL in response');
-      return new Response(
-        JSON.stringify({ error: 'Nenhuma imagem editada retornada pela API' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // For now, return a helpful message about editing
+    // Image editing with OpenAI requires complex mask generation
     return new Response(
-      JSON.stringify({ editedImageUrl }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: 'Edição de imagens não disponível no momento. Use a geração de novas imagens com o prompt desejado.' 
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {

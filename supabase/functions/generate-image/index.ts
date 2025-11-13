@@ -13,10 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    const STABILITY_API_KEY = Deno.env.get('STABILITY_API_KEY');
 
     const { prompt, style, aspectRatio, quality } = await req.json();
     
@@ -69,52 +67,133 @@ serve(async (req) => {
         break;
     }
 
-    console.log('Generating image with AI...');
+    console.log('Starting multi-API image generation...');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [
-          {
-            role: 'user',
-            content: enhancedPrompt
+    let imageUrl = null;
+    let lastError = null;
+
+    // Map aspect ratio to sizes
+    const sizeMap: Record<string, { openai: string; stability: { width: number; height: number } }> = {
+      '1:1': { openai: '1024x1024', stability: { width: 1024, height: 1024 } },
+      '16:9': { openai: '1536x1024', stability: { width: 1536, height: 864 } },
+      '9:16': { openai: '1024x1536', stability: { width: 864, height: 1536 } }
+    };
+    const sizes = sizeMap[aspectRatio] || sizeMap['1:1'];
+
+    // Strategy 1: Try OpenAI gpt-image-1 (best quality)
+    if (OPENAI_API_KEY) {
+      try {
+        console.log('Trying OpenAI gpt-image-1...');
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-image-1',
+            prompt: enhancedPrompt,
+            size: sizes.openai,
+            quality: quality === 'high' ? 'high' : 'auto',
+            output_format: 'png',
+            n: 1
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          imageUrl = data.data?.[0]?.b64_json ? `data:image/png;base64,${data.data[0].b64_json}` : data.data?.[0]?.url;
+          if (imageUrl) {
+            console.log('✓ Image generated with OpenAI gpt-image-1');
           }
-        ],
-        modalities: ['image', 'text']
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI API error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        } else {
+          const errorText = await response.text();
+          console.error('OpenAI gpt-image-1 error:', response.status, errorText);
+          lastError = `OpenAI error: ${response.status}`;
+        }
+      } catch (error) {
+        console.error('OpenAI gpt-image-1 exception:', error);
+        lastError = error instanceof Error ? error.message : 'OpenAI error';
       }
-      
-      return new Response(
-        JSON.stringify({ error: `Erro na API de IA: ${response.status}` }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
-    const data = await response.json();
-    console.log('AI response received');
-    
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Strategy 2: Try Stability AI SDXL
+    if (!imageUrl && STABILITY_API_KEY) {
+      try {
+        console.log('Trying Stability AI SDXL...');
+        const response = await fetch('https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${STABILITY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text_prompts: [{ text: enhancedPrompt }],
+            cfg_scale: 7,
+            width: sizes.stability.width,
+            height: sizes.stability.height,
+            samples: 1,
+            steps: 30,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          imageUrl = data.artifacts?.[0]?.base64 ? `data:image/png;base64,${data.artifacts[0].base64}` : null;
+          if (imageUrl) {
+            console.log('✓ Image generated with Stability AI');
+          }
+        } else {
+          const errorText = await response.text();
+          console.error('Stability AI error:', response.status, errorText);
+          lastError = `Stability AI error: ${response.status}`;
+        }
+      } catch (error) {
+        console.error('Stability AI exception:', error);
+        lastError = error instanceof Error ? error.message : 'Stability AI error';
+      }
+    }
+
+    // Strategy 3: Try OpenAI DALL-E 3 (backup)
+    if (!imageUrl && OPENAI_API_KEY) {
+      try {
+        console.log('Trying OpenAI DALL-E 3...');
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: enhancedPrompt,
+            size: sizes.openai,
+            quality: quality === 'high' ? 'hd' : 'standard',
+            n: 1
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          imageUrl = data.data?.[0]?.url;
+          if (imageUrl) {
+            console.log('✓ Image generated with DALL-E 3');
+          }
+        } else {
+          const errorText = await response.text();
+          console.error('DALL-E 3 error:', response.status, errorText);
+          lastError = `DALL-E 3 error: ${response.status}`;
+        }
+      } catch (error) {
+        console.error('DALL-E 3 exception:', error);
+        lastError = error instanceof Error ? error.message : 'DALL-E 3 error';
+      }
+    }
 
     if (!imageUrl) {
-      console.error('No image URL in response');
+      console.error('All APIs failed:', lastError);
       return new Response(
-        JSON.stringify({ error: 'Nenhuma imagem gerada pela IA' }),
+        JSON.stringify({ error: lastError || 'Falha ao gerar imagem com todas as APIs disponíveis' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
