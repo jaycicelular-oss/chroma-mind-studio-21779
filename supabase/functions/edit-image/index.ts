@@ -20,16 +20,6 @@ serve(async (req) => {
 
     console.log('Editing image with prompt:', editPrompt);
 
-    // Multi-API strategy: Try multiple AI models for better reliability
-    const models = [
-      'google/gemini-2.5-flash-image-preview',
-      'google/gemini-2.5-pro-image-preview',
-      'google/gemini-2.5-flash-lite-image-preview'
-    ];
-
-    let editedImageUrl = null;
-    let lastError = null;
-
     const systemPrompt = `Você é um editor de imagens avançado com precisão cirúrgica. Siga estas regras críticas:
 
 1. ALTERAÇÕES PRECISAS: Faça APENAS as modificações explicitamente solicitadas. Se pedirem "mudar para gordo", altere SOMENTE o tipo físico, mantendo tudo mais idêntico.
@@ -47,86 +37,67 @@ serve(async (req) => {
 
 5. NATURALIDADE: As alterações devem parecer naturais e coerentes com o resto da imagem.`;
 
-    // Try each model until one succeeds
-    for (const model of models) {
-      try {
-        console.log(`Trying edit with model: ${model}`);
-        
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
           },
-          body: JSON.stringify({
-            model: model,
-            messages: [
+          {
+            role: 'user',
+            content: [
               {
-                role: 'system',
-                content: systemPrompt
-              },
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'text',
-                    text: `Aplique estas modificações de forma precisa e cirúrgica: ${editPrompt}
+                type: 'text',
+                text: `Aplique estas modificações de forma precisa e cirúrgica: ${editPrompt}
 
 IMPORTANTE: Faça APENAS estas alterações. Todo o resto da imagem deve permanecer idêntico ao original.`
-                  },
-                  {
-                    type: 'image_url',
-                    image_url: {
-                      url: imageUrl
-                    }
-                  }
-                ]
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl
+                }
               }
-            ],
-            modalities: ['image', 'text'],
-            quality: 'high'
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`${model} error:`, response.status, errorText);
-          
-          if (response.status === 429) {
-            lastError = 'Limite de requisições excedido. Tente novamente em alguns minutos.';
-            continue; // Try next model
+            ]
           }
-          
-          lastError = `Erro da API: ${response.status}`;
-          continue; // Try next model
-        }
+        ],
+        modalities: ['image', 'text'],
+        quality: 'high'
+      }),
+    });
 
-        const data = await response.json();
-        editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-        if (editedImageUrl) {
-          console.log(`Image edited successfully with ${model}`);
-          break; // Success! Exit loop
-        } else {
-          console.error(`No image URL found in ${model} response`);
-          lastError = 'Nenhuma imagem retornada pela API';
-          continue; // Try next model
-        }
-      } catch (error) {
-        console.error(`Error with ${model}:`, error);
-        lastError = error instanceof Error ? error.message : 'Unknown error';
-        continue; // Try next model
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Edit API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
+      
+      return new Response(
+        JSON.stringify({ error: `Erro da API: ${response.status}` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // If all models failed, return error
+    const data = await response.json();
+    const editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
     if (!editedImageUrl) {
+      console.error('No edited image URL in response');
       return new Response(
-        JSON.stringify({ error: lastError || 'Falha ao editar imagem com todos os modelos disponíveis' }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Nenhuma imagem editada retornada pela API' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

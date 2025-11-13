@@ -69,76 +69,52 @@ serve(async (req) => {
         break;
     }
 
-    // Multi-API strategy: Try multiple AI models for better reliability
-    const models = [
-      'google/gemini-2.5-flash-image-preview',
-      'google/gemini-2.5-pro-image-preview',
-      'google/gemini-2.5-flash-lite-image-preview'
-    ];
+    console.log('Generating image with AI...');
 
-    let imageUrl = null;
-    let lastError = null;
-
-    // Try each model until one succeeds
-    for (const model of models) {
-      try {
-        console.log(`Trying model: ${model}`);
-        
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [
-              {
-                role: 'user',
-                content: enhancedPrompt
-              }
-            ],
-            modalities: ['image', 'text']
-          }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`${model} error:`, response.status, errorText);
-          
-          if (response.status === 429) {
-            lastError = 'Limite de requisições excedido. Tente novamente em alguns minutos.';
-            continue; // Try next model
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'user',
+            content: enhancedPrompt
           }
-          
-          lastError = `Erro na API de IA: ${response.status}`;
-          continue; // Try next model
-        }
+        ],
+        modalities: ['image', 'text']
+      }),
+    });
 
-        const data = await response.json();
-        console.log(`${model} response:`, JSON.stringify(data, null, 2));
-        
-        imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-        if (imageUrl) {
-          console.log(`Image generated successfully with ${model}`);
-          break; // Success! Exit loop
-        } else {
-          console.error(`No image URL found in ${model} response`);
-          lastError = 'No image generated - response format invalid';
-          continue; // Try next model
-        }
-      } catch (error) {
-        console.error(`Error with ${model}:`, error);
-        lastError = error instanceof Error ? error.message : 'Unknown error';
-        continue; // Try next model
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns minutos.' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
+      
+      return new Response(
+        JSON.stringify({ error: `Erro na API de IA: ${response.status}` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // If all models failed, return error
+    const data = await response.json();
+    console.log('AI response received');
+    
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
     if (!imageUrl) {
+      console.error('No image URL in response');
       return new Response(
-        JSON.stringify({ error: lastError || 'Falha ao gerar imagem com todos os modelos disponíveis' }),
+        JSON.stringify({ error: 'Nenhuma imagem gerada pela IA' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
