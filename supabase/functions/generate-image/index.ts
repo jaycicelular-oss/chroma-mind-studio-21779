@@ -72,13 +72,26 @@ serve(async (req) => {
     let imageUrl = null;
     let lastError = null;
 
-    // Map aspect ratio to sizes
-    const sizeMap: Record<string, { openai: string; stability: { width: number; height: number } }> = {
-      '1:1': { openai: '1024x1024', stability: { width: 1024, height: 1024 } },
-      '16:9': { openai: '1792x1024', stability: { width: 1536, height: 896 } },
-      '9:16': { openai: '1024x1792', stability: { width: 896, height: 1536 } }
+    // Size maps per provider to satisfy each API's constraints
+    const sizeMapGPT: Record<string, string> = {
+      '1:1': '1024x1024',
+      '16:9': '1536x1024', // gpt-image-1 supported wide
+      '9:16': '1024x1536',
     };
-    const sizes = sizeMap[aspectRatio] || sizeMap['1:1'];
+    const sizeMapDalle: Record<string, string> = {
+      '1:1': '1024x1024',
+      '16:9': '1792x1024', // DALL-E 3 wide
+      '9:16': '1024x1792',
+    };
+    const sizeMapStability: Record<string, { width: number; height: number }> = {
+      '1:1': { width: 1024, height: 1024 },
+      '16:9': { width: 1024, height: 576 }, // multiples of 64, <= 1024
+      '9:16': { width: 576, height: 1024 },
+    };
+
+    const gptSize = sizeMapGPT[aspectRatio] || sizeMapGPT['1:1'];
+    const dalleSize = sizeMapDalle[aspectRatio] || sizeMapDalle['1:1'];
+    const stabilitySize = sizeMapStability[aspectRatio] || sizeMapStability['1:1'];
 
     // Strategy 1: Try OpenAI gpt-image-1 (best quality)
     if (OPENAI_API_KEY) {
@@ -93,7 +106,7 @@ serve(async (req) => {
           body: JSON.stringify({
             model: 'gpt-image-1',
             prompt: enhancedPrompt,
-            size: sizes.openai,
+            size: gptSize,
             quality: quality === 'high' ? 'high' : 'auto',
             output_format: 'png',
             n: 1
@@ -136,8 +149,8 @@ serve(async (req) => {
           body: JSON.stringify({
             text_prompts: [{ text: enhancedPrompt }],
             cfg_scale: 7,
-            width: sizes.stability.width,
-            height: sizes.stability.height,
+            width: stabilitySize.width,
+            height: stabilitySize.height,
             samples: 1,
             steps: 30,
           }),
@@ -173,7 +186,7 @@ serve(async (req) => {
           body: JSON.stringify({
             model: 'dall-e-3',
             prompt: enhancedPrompt,
-            size: sizes.openai,
+            size: dalleSize,
             quality: quality === 'high' ? 'hd' : 'standard',
             n: 1
           }),
