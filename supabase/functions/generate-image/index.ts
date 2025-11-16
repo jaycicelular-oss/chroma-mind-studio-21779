@@ -75,8 +75,8 @@ serve(async (req) => {
     // Map aspect ratio to sizes
     const sizeMap: Record<string, { openai: string; stability: { width: number; height: number } }> = {
       '1:1': { openai: '1024x1024', stability: { width: 1024, height: 1024 } },
-      '16:9': { openai: '1536x1024', stability: { width: 1536, height: 864 } },
-      '9:16': { openai: '1024x1536', stability: { width: 864, height: 1536 } }
+      '16:9': { openai: '1792x1024', stability: { width: 1536, height: 896 } },
+      '9:16': { openai: '1024x1792', stability: { width: 896, height: 1536 } }
     };
     const sizes = sizeMap[aspectRatio] || sizeMap['1:1'];
 
@@ -109,7 +109,13 @@ serve(async (req) => {
         } else {
           const errorText = await response.text();
           console.error('OpenAI gpt-image-1 error:', response.status, errorText);
-          lastError = `OpenAI error: ${response.status}`;
+          if (response.status === 429) {
+            lastError = 'OpenAI: Limite de requisições atingido';
+          } else if (errorText.includes('billing_hard_limit_reached') || errorText.includes('insufficient_quota')) {
+            lastError = 'OpenAI: Limite de créditos atingido. Por favor, adicione créditos na sua conta OpenAI.';
+          } else {
+            lastError = `OpenAI error: ${response.status}`;
+          }
         }
       } catch (error) {
         console.error('OpenAI gpt-image-1 exception:', error);
